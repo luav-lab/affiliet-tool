@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Affiliate Tool PRO</title>
+
+<style>
+body {
+  margin:0;
+  font-family: Arial;
+  background:#0b0f1a;
+  color:#fff;
+}
+
+.container {
+  max-width:1000px;
+  margin:auto;
+  padding:20px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:20px;
+}
+
+@media(max-width:768px){
+  .container {grid-template-columns:1fr;}
+}
+
+.card {
+  background:#111827;
+  padding:20px;
+  border-radius:15px;
+}
+
+h1 {
+  color:#ff3b00;
+}
+
+.notice {
+  background:#2a1a0f;
+  padding:15px;
+  border-radius:10px;
+  margin:15px 0;
+  color:#fbbf24;
+}
+
+input {
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  background:#020617;
+  color:white;
+}
+
+.btn {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:10px;
+  background:#ff3b00;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.result {
+  margin-top:10px;
+  word-break:break-all;
+  color:#22c55e;
+}
+
+.voucher {
+  margin-bottom:15px;
+  background:#0f172a;
+  padding:15px;
+  border-radius:12px;
+}
+
+.progress {
+  height:8px;
+  background:#333;
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:10px;
+}
+
+.progress-bar {
+  height:100%;
+  background:linear-gradient(90deg,#ff3b00,#facc15);
+}
+
+.small {
+  font-size:12px;
+  color:#aaa;
+}
+
+.toast {
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  background:#111;
+  padding:10px 20px;
+  border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <!-- LEFT -->
+  <div class="card">
+    <h1>ÁP MÃ YOUTUBE & FACEBOOK</h1>
+
+    <div class="notice">
+      ⚠ Tool hoạt động tốt nhất trên điện thoại
+    </div>
+
+    <div class="card">
+      <h3>Nhập link sản phẩm</h3>
+
+      <input id="linkInput" placeholder="https://shopee.vn/...">
+
+      <button class="btn" onclick="createLink()">🚀 Lấy link</button>
+
+      <div class="result" id="result"></div>
+
+      <button class="btn" onclick="copyLink()">📋 Copy</button>
+      <button class="btn" onclick="shareFB()">📘 Facebook</button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="card">
+    <h2>🎟 Danh sách mã giảm giá</h2>
+    <div id="voucherList"></div>
+  </div>
+
+</div>
+
+<script>
+
+// ===== TOAST =====
+function showToast(msg){
+  let t = document.createElement("div");
+  t.className = "toast";
+  t.innerText = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2000);
+}
+
+// ===== LINK =====
+let finalLink = "";
+
+async function createLink(){
+  let link = document.getElementById("linkInput").value;
+
+  if(!link){
+    showToast("Nhập link!");
+    return;
+  }
+
+  document.getElementById("result").innerText = "⏳ Đang xử lý...";
+
+  try {
+    // 🔥🔥🔥 CHỖ CẦN THAY Ở ĐÂY 🔥🔥🔥
+    let res = await fetch("https://backend-aff-abc.onrender.com/create?url=" + encodeURIComponent(link));
+    
+    let data = await res.json();
+    finalLink = data.short;
+
+  } catch(e){
+    finalLink = "Lỗi backend (chưa có server)";
+  }
+
+  document.getElementById("result").innerText = finalLink;
+  showToast("Tạo link thành công!");
+}
+
+function copyLink(){
+  if(!finalLink){
+    showToast("Chưa có link!");
+    return;
+  }
+  navigator.clipboard.writeText(finalLink);
+  showToast("Đã copy!");
+}
+
+function shareFB(){
+  if(!finalLink){
+    showToast("Chưa có link!");
+    return;
+  }
+  window.open("https://www.facebook.com/sharer/sharer.php?u=" + finalLink);
+
+// ===== VOUCHER =====
+let vouchers = [
+  {code:"YOUTUBE50", desc:"Giảm 50% tối đa 100k", used:95},
+  {code:"YOUTUBEAPR", desc:"Giảm 50% tối đa 100k", used:80},
+  {code:"FBHOT", desc:"Giảm 30% tối đa 50k", used:60}
+];
+
+function renderVouchers(){
+  let html = "";
+
+  vouchers.forEach(v=>{
+    let status = v.used >= 100 ? "Hết lượt" : "";
+
+    html += 
+    <div class="voucher">
+      <b>${v.code} ${status ? "❌ "+status : ""}</b>
+      <div>${v.desc}</div>
+
+      <div class="progress">
+        <div class="progress-bar" style="width:${v.used}%"></div>
+      </div>
+
+      <div class="small">Đã dùng: ${Math.floor(v.used)}%</div>
+    </div>
+    ;
+  });
+document.getElementById("voucherList").innerHTML = html;
+}
+
+renderVouchers();
+
+// auto tăng % cho giống web thật
+setInterval(()=>{
+  vouchers.forEach(v=>{
+    if(v.used < 100){
+      v.used += Math.random()*2;
+    }
+  });
+  renderVouchers();
+},3000);
+
+</script>
+
+</body>
+</html>
